@@ -1,0 +1,16 @@
+[build]
+builder = "nixpacks"
+buildCommand = "npm install && npm run build"
+
+[deploy]
+startCommand = "npm run start:prod"
+healthcheckPath = "/health"
+healthcheckTimeout = 100
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+[deploy.envs]
+NODE_ENV = "production"
+PORT = "3000"
+JWT_EXPIRATION = "1d"
+FRONTEND_URL = "https://your-frontend-url.com"

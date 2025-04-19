@@ -1,0 +1,114 @@
+{
+  "name": "Advanced Business Management System",
+  "short_name": "ABMS",
+  "description": "A comprehensive business management system with advanced features",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4a90e2",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/static/images/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/images/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/images/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/images/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/images/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/images/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/images/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/images/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/static/images/screenshots/dashboard.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "platform": "wide",
+      "label": "Dashboard"
+    },
+    {
+      "src": "/static/images/screenshots/invoices.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "platform": "wide",
+      "label": "Invoices"
+    },
+    {
+      "src": "/static/images/screenshots/projects.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "platform": "wide",
+      "label": "Projects"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View your dashboard",
+      "url": "/dashboard",
+      "icons": [{ "src": "/static/images/icons/dashboard.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "New Invoice",
+      "short_name": "New Invoice",
+      "description": "Create a new invoice",
+      "url": "/invoices/new",
+      "icons": [{ "src": "/static/images/icons/invoice.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "New Project",
+      "short_name": "New Project",
+      "description": "Create a new project",
+      "url": "/projects/new",
+      "icons": [{ "src": "/static/images/icons/project.png", "sizes": "192x192" }]
+    }
+  ],
+  "categories": ["business", "productivity", "finance"],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
+  "scope": "/",
+  "lang": "en-US",
+  "dir": "ltr",
+  "splash_pages": null
+} 

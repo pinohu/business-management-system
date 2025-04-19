@@ -1,0 +1,196 @@
+groups:
+  - name: system
+    rules:
+      - alert: HighCPUUsage
+        expr: avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) by (instance) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High CPU usage on {{ $labels.instance }}
+          description: CPU usage is above 90% for 5 minutes
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High memory usage on {{ $labels.instance }}
+          description: Memory usage is above 90% for 5 minutes
+
+      - alert: HighDiskUsage
+        expr: (node_filesystem_size_bytes - node_filesystem_free_bytes) / node_filesystem_size_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High disk usage on {{ $labels.instance }}
+          description: Disk usage is above 90% for 5 minutes
+
+  - name: application
+    rules:
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: High error rate detected
+          description: "Error rate is above 10% for the last 5 minutes"
+          value: "{{ $value | humanizePercentage }}"
+
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High latency detected
+          description: "95th percentile latency is above 1 second"
+          value: "{{ $value | humanizeDuration }}"
+
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Service {{ $labels.job }} is down
+          description: Service has been down for more than 1 minute
+
+  - name: database
+    rules:
+      - alert: HighDatabaseConnections
+        expr: pg_stat_activity_count > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High database connections on {{ $labels.instance }}
+          description: Database connections are above 100 for 5 minutes
+
+      - alert: DatabaseSlowQueries
+        expr: rate(pg_stat_activity_max_tx_duration{datname!~"template.*"}[5m]) > 300
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Slow queries detected on {{ $labels.instance }}
+          description: Queries running for more than 5 minutes
+
+  - name: redis
+    rules:
+      - alert: RedisMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High Redis memory usage on {{ $labels.instance }}
+          description: Redis memory usage is above 90% for 5 minutes
+
+      - alert: RedisConnectedClients
+        expr: redis_connected_clients > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High Redis connected clients on {{ $labels.instance }}
+          description: Redis connected clients are above 1000 for 5 minutes
+
+  - name: nginx
+    rules:
+      - alert: HighNginxErrorRate
+        expr: rate(nginx_http_requests_total{status=~"5.."}[5m]) / rate(nginx_http_requests_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: High Nginx error rate on {{ $labels.instance }}
+          description: Nginx error rate is above 10% for 5 minutes
+
+      - alert: HighNginxLatency
+        expr: histogram_quantile(0.95, rate(nginx_http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High Nginx latency on {{ $labels.instance }}
+          description: 95th percentile Nginx latency is above 1 second for 5 minutes
+
+  - name: application_alerts
+    rules:
+      # Memory usage alert
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes / process_virtual_memory_bytes > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High memory usage
+          description: "Memory usage is above 80%"
+          value: "{{ $value | humanizePercentage }}"
+
+      # CPU usage alert
+      - alert: HighCPUUsage
+        expr: rate(process_cpu_seconds_total[5m]) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High CPU usage
+          description: "CPU usage is above 80%"
+          value: "{{ $value | humanizePercentage }}"
+
+      # Database connection alert
+      - alert: DatabaseConnectionError
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Database connection error
+          description: "Database is not accessible"
+
+      # Redis connection alert
+      - alert: RedisConnectionError
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Redis connection error
+          description: "Redis is not accessible"
+
+      # Disk space alert
+      - alert: LowDiskSpace
+        expr: disk_free_bytes / disk_total_bytes < 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Low disk space
+          description: "Less than 10% disk space available"
+          value: "{{ $value | humanizePercentage }}"
+
+      # Backup failure alert
+      - alert: BackupFailed
+        expr: backup_success == 0
+        for: 1h
+        labels:
+          severity: critical
+        annotations:
+          summary: Backup failed
+          description: "Database backup has failed"
+
+      # SSL certificate expiration alert
+      - alert: SSLCertificateExpiring
+        expr: ssl_certificate_expiry_timestamp - time() < 86400 * 30
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: SSL certificate expiring soon
+          description: "SSL certificate will expire in less than 30 days"
+          value: "{{ $value | humanizeDuration }}"

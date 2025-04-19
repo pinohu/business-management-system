@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>App Deployment Dashboard</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { padding: 8px 12px; border: 1px solid #ccc; }
+    th { background: #f4f4f4; }
+  </style>
+</head>
+<body>
+  <h1>Deployment Dashboard</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>App</th>
+        <th>Status</th>
+        <th>GitHub</th>
+        <th>Vercel</th>
+        <th>Tests</th>
+      </tr>
+    </thead>
+    <tbody id="dashboard">
+      <!-- Entries will be dynamically populated -->
+    </tbody>
+  </table>
+  <script>
+    const apps = [
+      { name: "app_1", github: "https://github.com/org/app_1", vercel: "https://app_1.vercel.app", status: "Live", tests: "✅" },
+      { name: "app_2", github: "https://github.com/org/app_2", vercel: "https://app_2.vercel.app", status: "Live", tests: "✅" },
+    ];
+
+    const tbody = document.getElementById("dashboard");
+    apps.forEach(app => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${app.name}</td>
+        <td>${app.status}</td>
+        <td><a href="${app.github}" target="_blank">Repo</a></td>
+        <td><a href="${app.vercel}" target="_blank">Site</a></td>
+        <td>${app.tests}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  </script>
+</body>
+</html>

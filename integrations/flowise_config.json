@@ -1,0 +1,23 @@
+{
+  "id": "cursor-autonomous-template-builder",
+  "name": "Autonomous App Setup Agent",
+  "description": "Reads provided documentation and creates a full-stack app project with spec, config, and starter code.",
+  "chain": [
+    {
+      "step": "Read spec.md and docs/*",
+      "action": "Parse requirements"
+    },
+    {
+      "step": "Generate .cursor-config.json",
+      "action": "Embed system prompt and agentSettings"
+    },
+    {
+      "step": "Create base folder structure",
+      "action": "scaffold src/, docs/, pages/, api/, components/"
+    },
+    {
+      "step": "Inject placeholders for Next.js + Supabase stack",
+      "action": "Insert index.js, handler.js, Dashboard.js"
+    }
+  ]
+}

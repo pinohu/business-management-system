@@ -1,0 +1,6 @@
+FROM node:18
+
+WORKDIR /app
+RUN npm install -g npm@latest
+
+CMD ["sh", "-c", "echo 'Ready for test execution'"]

@@ -1,0 +1,152 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: kubernetes-alerts
+  namespace: analytics
+spec:
+  groups:
+  - name: kubernetes
+    rules:
+    - alert: K8sPodCrashLooping
+      expr: kube_pod_container_status_restarts_total > 5
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: Pod {{ $labels.pod }} is crash looping
+        description: Pod {{ $labels.pod }} has restarted {{ $value }} times in the last 5 minutes
+
+    - alert: K8sPodNotReady
+      expr: kube_pod_status_ready{condition="false"} > 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: Pod {{ $labels.pod }} is not ready
+        description: Pod {{ $labels.pod }} has been not ready for more than 5 minutes
+
+    - alert: K8sNodeNotReady
+      expr: kube_node_status_condition{condition="Ready",status="false"} > 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: Node {{ $labels.node }} is not ready
+        description: Node {{ $labels.node }} has been not ready for more than 5 minutes
+
+    - alert: K8sHighCPUUsage
+      expr: container_cpu_usage_seconds_total{container!=""} > 0.8
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: High CPU usage in container {{ $labels.container }}
+        description: Container {{ $labels.container }} in pod {{ $labels.pod }} is using {{ $value | humanizePercentage }} CPU
+
+    - alert: K8sHighMemoryUsage
+      expr: container_memory_usage_bytes{container!=""} / container_spec_memory_limit_bytes{container!=""} > 0.8
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: High memory usage in container {{ $labels.container }}
+        description: Container {{ $labels.container }} in pod {{ $labels.pod }} is using {{ $value | humanizePercentage }} memory
+
+    - alert: K8sHighDiskUsage
+      expr: kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes > 0.8
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: High disk usage on node {{ $labels.node }}
+        description: Node {{ $labels.node }} is using {{ $value | humanizePercentage }} disk space
+
+    - alert: K8sDeploymentReplicasMismatch
+      expr: kube_deployment_status_replicas_available != kube_deployment_spec_replicas
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Deployment {{ $labels.deployment }} replicas mismatch
+        description: Deployment {{ $labels.deployment }} has {{ $value }} available replicas, expected {{ $labels.replicas }}
+
+    - alert: K8sHighPodCount
+      expr: count(kube_pod_info) > 100
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: High pod count in cluster
+        description: Cluster has {{ $value }} pods running
+
+    - alert: K8sHighNodeCount
+      expr: count(kube_node_info) > 10
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: High node count in cluster
+        description: Cluster has {{ $value }} nodes
+
+    - alert: K8sHighAPILatency
+      expr: histogram_quantile(0.95, rate(apiserver_request_duration_seconds_bucket[5m])) > 1
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: High API server latency
+        description: 95th percentile API server latency is {{ $value }}s
+
+    - alert: K8sHighEtcdLatency
+      expr: histogram_quantile(0.95, rate(etcd_request_duration_seconds_bucket[5m])) > 1
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: High etcd latency
+        description: 95th percentile etcd latency is {{ $value }}s
+
+    - alert: K8sHighControllerManagerLatency
+      expr: histogram_quantile(0.95, rate(controller_manager_request_duration_seconds_bucket[5m])) > 1
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: High controller manager latency
+        description: 95th percentile controller manager latency is {{ $value }}s
+
+    - alert: K8sHighSchedulerLatency
+      expr: histogram_quantile(0.95, rate(scheduler_request_duration_seconds_bucket[5m])) > 1
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: High scheduler latency
+        description: 95th percentile scheduler latency is {{ $value }}s
+
+    - alert: K8sHighPodPending
+      expr: kube_pod_status_phase{phase="Pending"} > 10
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: High number of pending pods
+        description: {{ $value }} pods are in Pending state
+
+    - alert: K8sHighPodFailed
+      expr: kube_pod_status_phase{phase="Failed"} > 5
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: High number of failed pods
+        description: {{ $value }} pods are in Failed state
+
+    - alert: K8sHighPodUnknown
+      expr: kube_pod_status_phase{phase="Unknown"} > 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: Pods in Unknown state
+        description: {{ $value }} pods are in Unknown state

@@ -1,0 +1,36 @@
+server:
+  http_listen_port: 3200
+  grpc_listen_port: 9095
+
+distributor:
+  receivers:
+    jaeger:
+      protocols:
+        thrift_http:
+          endpoint: "0.0.0.0:14268"
+        grpc:
+          endpoint: "0.0.0.0:14250"
+        thrift_binary:
+          endpoint: "0.0.0.0:6832"
+        thrift_compact:
+          endpoint: "0.0.0.0:6831"
+    zipkin:
+    otlp:
+      protocols:
+        http:
+          endpoint: "0.0.0.0:4318"
+        grpc:
+          endpoint: "0.0.0.0:4317"
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /tmp/tempo/blocks
+    block:
+      bloom_filter_false_positive: .05
+      index_downsample_bytes: 1000
+      encoding: zstd
+    wal:
+      path: /tmp/tempo/wal
+      encoding: snappy 

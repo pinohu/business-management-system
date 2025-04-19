@@ -1,0 +1,79 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: db-backup
+  namespace: analytics
+spec:
+  schedule: "0 0 * * *"  # Run daily at midnight
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: backup
+            image: postgres:14-alpine
+            command:
+            - /bin/sh
+            - -c
+            - |
+              pg_dump -h postgres -U $(POSTGRES_USER) -d $(POSTGRES_DB) > /backup/backup_$(date +%Y%m%d_%H%M%S).sql
+              # Upload to S3
+              aws s3 cp /backup/backup_*.sql s3://$(S3_BUCKET)/backups/
+              # Clean up old backups
+              find /backup -type f -name "backup_*.sql" -mtime +$(BACKUP_RETENTION_DAYS) -delete
+            env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: analytics-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: analytics-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: analytics-secrets
+                  key: POSTGRES_DB
+            - name: S3_BUCKET
+              value: "analytics-backups"
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: analytics-secrets
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: analytics-secrets
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: AWS_DEFAULT_REGION
+              value: "us-east-1"
+            - name: BACKUP_RETENTION_DAYS
+              value: "30"
+            volumeMounts:
+            - name: backup-volume
+              mountPath: /backup
+          volumes:
+          - name: backup-volume
+            persistentVolumeClaim:
+              claimName: backup-pvc
+          restartPolicy: OnFailure
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: backup-pvc
+  namespace: analytics
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard

@@ -1,0 +1,159 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: analytics
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: backend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/api/metrics"
+    spec:
+      containers:
+      - name: backend
+        image: backend:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+          name: http
+        - containerPort: 8001
+          name: websocket
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: analytics-config
+              key: NODE_ENV
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              name: analytics-config
+              key: PORT
+        - name: DATABASE_URL
+          value: postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres:5432/$(POSTGRES_DB)
+        - name: REDIS_URL
+          value: redis://:$(REDIS_PASSWORD)@redis-master:6379
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: analytics-secrets
+              key: JWT_SECRET
+        - name: CORS_ORIGIN
+          valueFrom:
+            configMapKeyRef:
+              name: analytics-config
+              key: CORS_ORIGIN
+        - name: RATE_LIMIT_WINDOW
+          valueFrom:
+            configMapKeyRef:
+              name: analytics-config
+              key: RATE_LIMIT_WINDOW
+        - name: RATE_LIMIT_MAX_REQUESTS
+          valueFrom:
+            configMapKeyRef:
+              name: analytics-config
+              key: RATE_LIMIT_MAX_REQUESTS
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        volumeMounts:
+        - name: models
+          mountPath: /app/models
+      volumes:
+      - name: models
+        persistentVolumeClaim:
+          claimName: models-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: analytics
+spec:
+  selector:
+    app: backend
+  ports:
+  - name: http
+    port: 8000
+    targetPort: http
+  - name: websocket
+    port: 8001
+    targetPort: websocket
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: backend-ingress
+  namespace: analytics
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+  - hosts:
+    - api.example.com
+    - ws.example.com
+    secretName: analytics-tls
+  rules:
+  - host: api.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: backend
+            port:
+              number: 8000
+  - host: ws.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: backend
+            port:
+              number: 8001
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: models-pvc
+  namespace: analytics
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard

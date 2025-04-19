@@ -1,0 +1,39 @@
+name: api
+type: nodejs:18
+
+build:
+    flavor: none
+
+relationships:
+    postgresql: "db:postgresql"
+
+web:
+    commands:
+        start: npm run start:prod
+    locations:
+        "/":
+            passthru: true
+            expires: 0
+            scripts: false
+            allow: true
+
+disk: 1024
+
+mounts:
+    "/tmp":
+        source: local
+        source_path: tmp
+
+hooks:
+    build: |
+        npm install
+        npm run build
+    deploy: |
+        npx prisma migrate deploy
+
+variables:
+    env:
+        NODE_ENV: production
+        PORT: 3000
+        JWT_EXPIRATION: 1d
+        FRONTEND_URL: https://your-frontend-url.com
